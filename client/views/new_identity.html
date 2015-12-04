@@ -1,0 +1,16 @@
+<template name="new_identity">
+
+<form class="new-identity">
+	<div class="input">
+		<select name="account">
+			{{#each accounts}}
+				<option value="{{this}}">{{this}}</option>
+			{{/each}}
+		</select>
+		<input type="text" name="name" placeholder="Name:">
+	</div>
+
+	<input type="submit" value="Send">
+</form>
+
+</template>

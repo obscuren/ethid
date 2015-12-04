@@ -1,0 +1,18 @@
+<template name="list">
+
+<table>
+	<tr>
+		<th>Identity</th>
+		<th>Address</th>
+	</tr>
+{{#each identities}}
+	<tr class="{{isVerified verified}}">
+		<td>{{name}}</td>
+		<td>{{address}}</td>
+	</tr>
+{{/each}}
+</table>
+
+{{> new_identity}}
+
+</template>
