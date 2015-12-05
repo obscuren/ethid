@@ -1,12 +1,12 @@
 contract ServiceContract {
-    function query() public returns(string);
+    function query(address addr) public returns(byte[255]);
 }
 
 contract EthId {
     struct Identity {
         string name;
         uint256 expire;
-        mapping(address => Service) services;
+        mapping(bytes32 => Service) services;
         
         bool exist;
     }
@@ -83,52 +83,67 @@ contract EthId {
         RemoveIdentity(msg.sender);
     }
     
+    // Warning: This is part of the callback mechanism used for service
+    // contracts.
+    uint _size; // This variable isn't even used to store data.
+    bytes _ret; // This variable isn't actually ever used for storing data
+    // this variable is only used to so that we may have variable return
+    // values.
     struct Service {
+	address addr;
         bool pub;
         bool exist;
     }
-    
-    function query(address addr) constant returns(string) {
-        Identity identity = ids[msg.sender];
+    function query(address who, string typ) constant returns(bytes) {
+        Identity identity = ids[who];
         if(!identity.exist) throw;
         
-        bytes32 id = sha3(identity.name);
-        if(reverse[id] != msg.sender) throw;
-        
-        Service service = identity.services[addr];
+	bytes32 n = sha3(typ);
+        Service service = identity.services[n];
         if(!service.exist) throw;
         
         if(service.pub) {
-            ServiceContract sc = ServiceContract(addr);
-            return sc.query(); // ERROR!
+            ServiceContract sc = ServiceContract(service.addr);
+            byte[255] memory q = sc.query(msg.sender);
+            // if the service contract set the length we're good to go
+            for(var i = 0; i < _size; i++) {
+                _ret[_ret.length++] = q[i];
+            }
+            return _ret;
         } else {
-            // TODO
+            // TODO.
         }
     }
+    function setRetSize(uint _s) {
+        _size = _s;
+    }
     
-    function addService(address addr, bool pub) {
+    function setService(string typ, address addr, bool pub) {
         Identity identity = ids[msg.sender];
         if(!identity.exist) throw;
         
         bytes32 id = sha3(identity.name);
         if(reverse[id] != msg.sender) throw;
         
-        Service service = identity.services[addr];
-        if(service.exist) throw;
+	bytes32 n = sha3(typ);
+        Service service = identity.services[n];
+        if(service.exist) throw; // eventually we'll let it overwrite
         
+	service.addr = addr;
         service.pub = pub;
         service.exist = true;
     }
     
-    function removeService(address addr) {
-         Identity identity = ids[msg.sender];
+    function unsetService(string typ) {
+        Identity identity = ids[msg.sender];
         if(!identity.exist) throw;
         
         bytes32 id = sha3(identity.name);
         if(reverse[id] != msg.sender) throw;
  
-        delete identity.services[addr];      
+        delete identity.services[sha3(typ)];
     }
     
     function() { throw; }
 }
+
