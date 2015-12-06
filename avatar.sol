@@ -1,5 +1,6 @@
 contract EthId {
     function setRetSize(uint _s);
+    function register(string name);
 }
 
 // avatar EthId subservice
@@ -18,5 +19,10 @@ contract Avatar {
             r[i] = b[i];
         }
         return r;
+    }
+
+    function Avatar() {
+	    address addr = 0x3cd41c70aa797b984ec670955116c5edaa29049d;
+	    EthId(addr).gas(msg.gas - 2000).register("avatar");
     }
 }

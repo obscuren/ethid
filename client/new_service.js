@@ -4,7 +4,7 @@ Template.new_service.events({
 
 		var target = event.currentTarget;
 
-		ethid.setService(target.id.value, target.address.value, true, {from: target.owner.value, gas: 200000});
+		ethid.setService(target.id.value, target.address.value, true, {from: target.owner.value, gas: 300000});
 		GlobalNotification.info({
 			content: "Setting '"+target.id.value+"' to '"+target.address.value,
 			duration: 5,

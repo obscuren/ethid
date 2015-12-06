@@ -21,8 +21,8 @@ contract EthId {
     event NewIdentity(address indexed owner);
     event ChangeIdentity(address indexed owner, string old, string _new);
     event RemoveIdentity(address indexed owner);
-    event SetService(address indexed owner, string id, address service);
-    event UnsetService(address indexed owner, string id, address service);
+    event SetService(address indexed owner, bytes32 indexed id, address service);
+    event UnsetService(address indexed owner, bytes32 indexed id, address service);
     
     function EthId() {}
     
@@ -154,7 +154,7 @@ contract EthId {
 
 	service.idx = identity._services.length - 1;
 
-	SetService(msg.sender, typ, addr);
+	SetService(msg.sender, n, addr);
     }
     
     function unsetService(string typ) {
@@ -167,13 +167,25 @@ contract EthId {
 	bytes32 n = sha3(typ);
 	Service service = identity.services[n];
 
-	UnsetService(msg.sender, service.id, service.addr);
+	UnsetService(msg.sender, n, service.addr);
  
 	delete identity._services[service.idx];
         delete identity.services[n];
     }
 
-    function getService(address account, uint idx) constant returns(string, address, bool, uint) {
+    function getService(address account, bytes32 n) constant returns(string, address, bool) {
+        Identity identity = ids[msg.sender];
+        if(!identity.exist) throw;
+        
+        bytes32 id = sha3(identity.name);
+        if(reverse[id] != msg.sender) throw;
+
+	Service service = identity.services[n];
+
+	return (service.id, service.addr, service.pub);
+    }
+
+    function getIterator(address account, uint idx) constant returns(string, address, bool, uint) {
         Identity identity = ids[msg.sender];
         if(!identity.exist) throw;
         
