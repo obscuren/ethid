@@ -6,7 +6,7 @@
 		<th>Address</th>
 	</tr>
 {{#each identities}}
-	<tr class="{{isVerified verified}}">
+	<tr data-name="{{name}}" class="identity {{isVerified verified}}">
 		<td>{{name}}</td>
 		<td>{{address}}</td>
 	</tr>

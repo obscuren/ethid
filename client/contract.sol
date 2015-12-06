@@ -7,17 +7,22 @@ contract EthId {
         string name;
         uint256 expire;
         mapping(bytes32 => Service) services;
+	bytes32[] _services;
         
         bool exist;
     }
-    
+
+    uint public numIdentities;
+
     // 1 identity per address which allows us to do reverse lookups
     mapping(address => Identity) ids;
     mapping(bytes32 => address) reverse;
     
     event NewIdentity(address indexed owner);
-    event ChangeIdentity(address indexed owner, bytes32 old, bytes32 _new);
+    event ChangeIdentity(address indexed owner, string old, string _new);
     event RemoveIdentity(address indexed owner);
+    event SetService(address indexed owner, string id, address service);
+    event UnsetService(address indexed owner, string id, address service);
     
     function EthId() {}
     
@@ -38,7 +43,25 @@ contract EthId {
         reverse[id] = msg.sender;
         
         NewIdentity(msg.sender);
+
+	numIdentities++;
     }
+
+    function unregister() {
+        Identity identity = ids[msg.sender];
+        if(!identity.exist) throw;
+        
+        bytes32 id = sha3(identity.name);
+        if(reverse[id] != msg.sender) throw;
+        
+        delete reverse[id];
+        delete ids[msg.sender];
+        
+        RemoveIdentity(msg.sender);
+
+	numIdentities--;
+    }
+    
     
     function identify(address who) constant returns(string) { return ids[who].name; }
     function lookup(string name) constant returns(address) { return reverse[sha3(name)]; }
@@ -64,23 +87,13 @@ contract EthId {
         bytes32 id = sha3(_new);
         if(reverse[id] != 0x0) return;
         
+	    ChangeIdentity(msg.sender, ids[msg.sender].name, _new);
+
         ids[msg.sender].name = _new;
         reverse[id] = msg.sender;
         
         delete reverse[oldId];
-    }
-    
-    function unregister() {
-        Identity identity = ids[msg.sender];
-        if(!identity.exist) throw;
-        
-        bytes32 id = sha3(identity.name);
-        if(reverse[id] != msg.sender) throw;
-        
-        delete reverse[id];
-        delete ids[msg.sender];
-        
-        RemoveIdentity(msg.sender);
+
     }
     
     // Warning: This is part of the callback mechanism used for service
@@ -90,7 +103,9 @@ contract EthId {
     // this variable is only used to so that we may have variable return
     // values.
     struct Service {
+	string id;
 	address addr;
+	uint idx;
         bool pub;
         bool exist;
     }
@@ -109,10 +124,11 @@ contract EthId {
             for(var i = 0; i < _size; i++) {
                 _ret[_ret.length++] = q[i];
             }
-            return _ret;
         } else {
             // TODO.
         }
+
+	return _ret;
     }
     function setRetSize(uint _s) {
         _size = _s;
@@ -129,9 +145,16 @@ contract EthId {
         Service service = identity.services[n];
         if(service.exist) throw; // eventually we'll let it overwrite
         
+	service.id = typ;
 	service.addr = addr;
-        service.pub = pub;
-        service.exist = true;
+	service.pub = pub;
+	service.exist = true;
+
+	identity._services.push(n);
+
+	service.idx = identity._services.length - 1;
+
+	SetService(msg.sender, typ, addr);
     }
     
     function unsetService(string typ) {
@@ -140,10 +163,36 @@ contract EthId {
         
         bytes32 id = sha3(identity.name);
         if(reverse[id] != msg.sender) throw;
+
+	bytes32 n = sha3(typ);
+	Service service = identity.services[n];
+
+	UnsetService(msg.sender, service.id, service.addr);
  
-        delete identity.services[sha3(typ)];
+	delete identity._services[service.idx];
+        delete identity.services[n];
     }
+
+    function getService(address account, uint idx) constant returns(string, address, bool, uint) {
+        Identity identity = ids[msg.sender];
+        if(!identity.exist) throw;
+        
+        bytes32 id = sha3(identity.name);
+        if(reverse[id] != msg.sender) throw;
+        
+	if( idx >= identity._services.length ) throw;
+	
+	Service service = identity.services[identity._services[idx]];
+	uint next;
+	if( identity._services.length > idx+1 ) {
+	    next = idx+1;
+	} else {
+	    next = 0;
+	}
+
+	return (service.id, service.addr, service.pub, next);
+    }
+    
     
     function() { throw; }
 }
-

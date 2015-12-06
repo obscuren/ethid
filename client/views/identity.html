@@ -1,0 +1,39 @@
+<template name="identity">
+
+<h3>
+	{{identity.name}}
+
+	{{#if owning identity}}
+		( owned )
+	{{/if}}
+
+	<div class="sub-header">{{identity.address}}</div>
+</h3>
+
+<h2>Registered services</h2>
+
+<table>
+	<tr>
+		<th>ID</th>
+		<th>Address</th>
+		<th>Public</th>
+	</tr>
+
+	{{#each services identity}}
+		<tr>
+			<td>{{id}}</td>
+			<td>{{address}}</td>
+			<td>{{public}}</td>
+		</tr>
+	{{/each}}
+</table>
+
+{{#if owning identity}}
+
+<h2>Register service</h2>
+
+{{> new_service}}
+
+{{/if}}
+
+</template>

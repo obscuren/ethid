@@ -1,3 +1,5 @@
+var zeroAddress = "0x0000000000000000000000000000000000000000";
+
 Template.new_identity.helpers({
 	accounts: function() {
 		var accounts = [];
@@ -11,28 +13,18 @@ Template.new_identity.helpers({
 	},
 });
 
-
 Template.new_identity.events({
 	'submit .new-identity': function(event) {
 		event.preventDefault();
 
 		var target = event.currentTarget;
-		if(ethid.lookup(target.name.value) !== "0x0000000000000000000000000000000000000000") {
+		if(ethid.lookup(target.name.value) !== zeroAddress) {
 			GlobalNotification.error({
 				content: target.name.value + " is already registered", 
 				duration: 5,
 			});
 			return;
 		}
-
-		ethid.NewIdentity({owner: target.account.value}, function(error, res) {
-			Identities.upsert(target.account.value, {address: target.account.value, name: target.name.value, verified: true});
-			GlobalNotification.info({
-				content: event.name.value + " successfully registered", 
-				duration: 5,
-			});
-		});
-
 
 		try {
 			ethid.register(target.name.value, {from:target.account.value, gas:200000});
