@@ -22,7 +22,7 @@ contract Avatar {
     }
 
     function Avatar() {
-	    address addr = 0x3cd41c70aa797b984ec670955116c5edaa29049d;
-	    EthId(addr).gas(msg.gas - 2000).register("avatar");
+	    address addr = 0x338502ada47a172a86db16ea4d4fd33aa523ac13;
+	    EthId(addr).register("avatar");
     }
 }

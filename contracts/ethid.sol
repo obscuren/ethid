@@ -1,5 +1,8 @@
 contract ServiceContract {
+    enum ReturnType { Int, Bool, Bytes }
     function query(address addr) public returns(byte[255]);
+    function queryInt(address addr) public returns(uint);
+    function retType() public returns(ReturnType);
 }
 
 contract EthId {
@@ -12,19 +15,13 @@ contract EthId {
         bool exist;
     }
 
-    uint public numIdentities;
-
-    // 1 identity per address which allows us to do reverse lookups
-    mapping(address => Identity) ids;
-    mapping(bytes32 => address) reverse;
-    
     event NewIdentity(address indexed owner);
-    event ChangeIdentity(address indexed owner, string old, string _new);
+    event ChangeIdentity(address indexed owner);
     event RemoveIdentity(address indexed owner);
     event SetService(address indexed owner, bytes32 indexed id, address service);
     event UnsetService(address indexed owner, bytes32 indexed id, address service);
     
-    function EthId() {}
+    function EthId() {owner=msg.sender;}
     
     function register(string name) {
         // already ownining an identity. Use change!
@@ -87,7 +84,7 @@ contract EthId {
         bytes32 id = sha3(_new);
         if(reverse[id] != 0x0) return;
         
-	    ChangeIdentity(msg.sender, ids[msg.sender].name, _new);
+	ChangeIdentity(msg.sender);
 
         ids[msg.sender].name = _new;
         reverse[id] = msg.sender;
@@ -129,6 +126,33 @@ contract EthId {
         }
 
 	return _ret;
+    }
+    function queryInt(address who, string typ) constant returns(uint r) {
+        Identity identity = ids[who];
+        if(!identity.exist) throw;
+        
+	bytes32 n = sha3(typ);
+        Service service = identity.services[n];
+        if(!service.exist) throw;
+        
+        if(service.pub) {
+            ServiceContract sc = ServiceContract(service.addr);
+            r = sc.queryInt(msg.sender);
+        } else {
+            // TODO.
+        }
+	return;
+    }
+    function getQueryReturnType(address who, string typ) constant returns(uint) {
+        Identity identity = ids[who];
+        if(!identity.exist) throw;
+        
+	bytes32 n = sha3(typ);
+        Service service = identity.services[n];
+        if(!service.exist) throw;
+
+	ServiceContract sc = ServiceContract(service.addr);
+	return uint(sc.retType());
     }
     function setRetSize(uint _s) {
         _size = _s;
@@ -185,8 +209,8 @@ contract EthId {
 	return (service.id, service.addr, service.pub);
     }
 
-    function getIterator(address account, uint idx) constant returns(string, address, bool, uint) {
-        Identity identity = ids[msg.sender];
+    function getServiceIterator(address account, uint idx) constant returns(string, address, bool, uint) {
+        Identity identity = ids[account];
         if(!identity.exist) throw;
         
         bytes32 id = sha3(identity.name);
@@ -205,6 +229,17 @@ contract EthId {
 	return (service.id, service.addr, service.pub, next);
     }
     
-    
     function() { throw; }
+    function kill() { suicide(owner); }
+
+    // return types
+    enum ReturnType { Int, Bool, Bytes }
+    // Amount of total identities.
+    uint public numIdentities;
+    // Creator of the contract (me)
+    address owner;
+    // Identity mappings
+    mapping(address => Identity) ids;
+    // Reverse identity mapping
+    mapping(bytes32 => address) reverse;
 }

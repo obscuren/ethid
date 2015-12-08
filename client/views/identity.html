@@ -17,6 +17,7 @@
 		<th>ID</th>
 		<th>Address</th>
 		<th>Public</th>
+		<th>Output</th>
 	</tr>
 
 	{{#each services identity}}
@@ -24,6 +25,7 @@
 			<td>{{id}}</td>
 			<td>{{{lookup address}}}</td>
 			<td>{{public}}</td>
+			<th>{{serviceQuery this}}</th>
 		</tr>
 	{{/each}}
 </table>

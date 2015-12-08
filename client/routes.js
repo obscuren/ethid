@@ -9,7 +9,7 @@ FlowRouter.route("/", {
 FlowRouter.route("/:name", {
 	name: "identity",
 	action: function(params) {
-		var identity = Identities.findOne({name: params.name});
+		var identity = {name: params.name, address: ethid.lookup(params.name)};
 
 		ethid.SetService({owner: identity.address}, function(error, res) {
 			var service = ethid.getService(identity.address, res.args.id);

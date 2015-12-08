@@ -1,23 +1,27 @@
 Services = new Meteor.Collection("services", {connection:null});
 
-function addService(service) {
+function addService(service, identity) {
 	if(service[0] === "") return;
-	Services.upsert(service[0], {id: service[0], address: service[1], public: service[2]});
+	Services.upsert(service[0], {id: service[0], address: service[1], public: service[2], identity: identity});
 }
 
 Template.identity.helpers({
 	services: function(identity) {
 		Services.remove({});
 
-		var service = ethid.getIterator(identity.address, 0);
-		addService(service);
+		var service = ethid.getServiceIterator(identity.address, 0);
+		addService(service, identity);
 
 		while(service[3].toNumber() != 0) {
-			service = ethid.getIterator(identity.address, service[3].toNumber());
-			addService(service)
+			service = ethid.getServiceIterator(identity.address, service[3].toNumber());
+			addService(service, identity)
 		}
 
 		return Services.find({});
+	},
+
+	serviceQuery: function(service) {
+		return ethid.get(service.identity.address, service.id);
 	},
 
 	owning: function(identity) {

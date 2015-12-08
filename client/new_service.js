@@ -9,5 +9,6 @@ Template.new_service.events({
 			content: "Setting '"+target.id.value+"' to '"+target.address.value,
 			duration: 5,
 		});
+		target.reset();
 	},
 })
