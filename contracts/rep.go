@@ -4,24 +4,28 @@ contract EthId {
     function register(string name);
 }
 
-contract Trusty {
+contract Rep {
     struct Id {
         address[] verifiers;
         bool exist;
     }
 
-    function Trusty() {
-        ethid.register("trusty");
+    function Rep () {
+        ethid.register("rep");
     }
     
     function verify(address who) {
         Id id = ids[who];
         id.verifiers.push(msg.sender);
     }
-    
+
+    function verifiers(address who) constant returns(address[]) {
+	    return ids[who].verifiers;
+    }
     // storage variable is never used. This is only meant for checking unique
     // addresses during `getRating` call which is a constant.
     mapping(address => bool) uniqAddresses;
+    mapping(address => bool) trustees;
     function getRating(address who, uint depth) constant returns(uint rating) {
         if(depth == 0) return 0;
         

@@ -5,6 +5,11 @@ contract ServiceContract {
     function retType() public returns(ReturnType);
 }
 
+contract Wot {
+	function verify(address ref, address who, uint level);
+	function validate(address ref, address verify, uint maxDepth) returns(bool);
+}
+
 contract EthId {
     struct Identity {
         string name;
@@ -233,7 +238,7 @@ contract EthId {
     function kill() { suicide(owner); }
 
     // return types
-    enum ReturnType { Int, Bool, Bytes }
+    enum ReturnType { Int, Bool, Bytes, String }
     // Amount of total identities.
     uint public numIdentities;
     // Creator of the contract (me)
@@ -242,4 +247,24 @@ contract EthId {
     mapping(address => Identity) ids;
     // Reverse identity mapping
     mapping(bytes32 => address) reverse;
+
+    Wot public wot;
+    function setWot(address addr) {
+	    if(msg.sender != owner) throw;
+	    if(address(wot) != 0x0) throw; // (pof) don't allow resetting;
+	    wot = Wot(addr);
+    }
+    /**
+     *
+     * WOT FARWARDING FUNCTIONS
+     *
+     **/
+    function verify(address who, uint level) {
+	    wot.verify(msg.sender, who, level);
+    }
+    function validate(address who, uint maxDepth) constant returns(bool) {
+	    if(maxDepth == 0) maxDepth = 10;
+
+	    return wot.validate(msg.sender, who, maxDepth);
+    }
 }
